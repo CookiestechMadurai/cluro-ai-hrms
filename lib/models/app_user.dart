@@ -5,11 +5,13 @@ class AppUser {
   final String name;
   final String email;
   final UserRole role;
+  final String status;
 
   const AppUser({
     required this.uid,
     required this.name,
     required this.email,
     required this.role,
+    required this.status,
   });
 }

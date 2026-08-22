@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. User Profiles Collection
+    match /users/{uid} {
+      // User can read their own profile. Admin can read/list all profiles.
+      allow read: if request.auth != null 
+                  && (request.auth.uid == uid 
+                      || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      
+      // Client-side writes are denied (Cloud Functions using Admin SDK execute modifications)
+      allow write: if false;
+    }
+
+    // 2. System Audit Logs Collection (Client read-only for Admins; Client write disabled)
+    match /audit_logs/{logId} {
+      allow read: if request.auth != null 
+                  && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      
+      allow write: if false; // Server-side Cloud Functions using Admin SDK write these
+    }
+
+    // 3. System Settings Collection (Admin-only read/write)
+    match /system_settings/{docId} {
+      allow read, write: if request.auth != null 
+                         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}
